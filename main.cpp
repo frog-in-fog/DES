@@ -17,8 +17,6 @@
   (byte & 0x01 ? 1 : 0)
 
 
-//using namespace std;
-
 std::string arrayToString(unsigned char* a, int size) {
     int i;
     std::string s;
@@ -135,30 +133,30 @@ public:
             rightText += text[i];
         }
 
-        std::string L_32[16], R_32[16];
-        std::string R_48[16];
-        std::string P_R[16];
+        std::string left32[16], right32[16];
+        std::string right48[16];
+        std::string afterPPerm[16];
 
-        P_R[0] = round_keys_enc->Encrypt(rightText, keys[0], 0);
+        afterPPerm[0] = round_keys_enc->Encrypt(rightText, keys[0], 0);
 
-        L_32[0] = rightText;
-        R_32[0] = "";
-        R_32[0] = do_xor(P_R[0], leftText);
+        left32[0] = rightText;
+        right32[0] = "";
+        right32[0] = do_xor(afterPPerm[0], leftText);
 
 
         for (int i = 1; i < 16; i++){
-            L_32[i] = R_32[i];
-            R_48[i] = "";
-            P_R[i] = round_keys_enc->Encrypt(R_32[i], keys[i], i);
+            left32[i] = right32[i];
+            right48[i] = "";
+            afterPPerm[i] = round_keys_enc->Encrypt(right32[i], keys[i], i);
 
-            L_32[i] = R_32[i - 1];
-            R_32[i] = "";
-            R_32[i] = do_xor(P_R[i], L_32[i - 1]);
+            left32[i] = right32[i - 1];
+            right32[i] = "";
+            right32[i] = do_xor(afterPPerm[i], left32[i - 1]);
         }
 
         std::string enc_bin, RL;
 
-        RL = R_32[15] + L_32[15];
+        RL = right32[15] + left32[15];
 
 
         return RL;
@@ -219,7 +217,7 @@ class PSPermutations{
             }
     };
 
-    const int P[32] = { 	16 ,7  ,20 ,21 ,
+    const int P[32] = {    16 ,7  ,20 ,21 ,
                            29 ,12 ,28 ,17 ,
                            1  ,15 ,23 ,26 ,
                            5  ,18 ,31 ,10 ,
@@ -249,23 +247,23 @@ public :
 };
 
 class DES{
-    const int IP_t[64] = { 	58 ,50 ,42 ,34 ,26 ,18 ,10 ,2 ,
-                              60 ,52 ,44 ,36 ,28 ,20 ,12 ,4 ,
-                              62 ,54 ,46 ,38 ,30 ,22 ,14 ,6 ,
-                              64 ,56 ,48 ,40 ,32 ,24 ,16 ,8 ,
-                              57 ,49 ,41 ,33 ,25 ,17 ,9  ,1 ,
-                              59 ,51 ,43 ,35 ,27 ,19 ,11 ,3 ,
-                              61 ,53 ,45 ,37 ,29 ,21 ,13 ,5 ,
-                              63 ,55 ,47 ,39 ,31 ,23 ,15 ,7 };
+    const int IP_t[64] = {58 , 50 , 42 , 34 , 26 , 18 , 10 , 2 ,
+                          60 , 52 , 44 , 36 , 28 , 20 , 12 , 4 ,
+                          62 , 54 , 46 , 38 , 30 , 22 , 14 , 6 ,
+                          64 , 56 , 48 , 40 , 32 , 24 , 16 , 8 ,
+                          57 , 49 , 41 , 33 , 25 , 17 , 9  , 1 ,
+                          59 , 51 , 43 , 35 , 27 , 19 , 11 , 3 ,
+                          61 , 53 , 45 , 37 , 29 , 21 , 13 , 5 ,
+                          63 , 55 , 47 , 39 , 31 , 23 , 15 , 7 };
 
-    const int P_1[64] = { 	40 ,8  ,48 ,16 ,56 ,24 ,64 ,32 ,
-                             39 ,7  ,47 ,15 ,55 ,23 ,63 ,31 ,
-                             38 ,6  ,46 ,14 ,54 ,22 ,62 ,30 ,
-                             37 ,5  ,45 ,13 ,53 ,21 ,61 ,29 ,
-                             36 ,4  ,44 ,12 ,52 ,20 ,60 ,28 ,
-                             35 ,3  ,43 ,11 ,51 ,19 ,59 ,27 ,
-                             34 ,2  ,42 ,10 ,50 ,18 ,58 ,26 ,
-                             33 ,1  ,41 ,9  ,49 ,17 ,57 ,25 };
+    const int P_1[64] = {40 , 8  , 48 , 16 , 56 , 24 , 64 , 32 ,
+                         39 , 7  , 47 , 15 , 55 , 23 , 63 , 31 ,
+                         38 , 6  , 46 , 14 , 54 , 22 , 62 , 30 ,
+                         37 , 5  , 45 , 13 , 53 , 21 , 61 , 29 ,
+                         36 , 4  , 44 , 12 , 52 , 20 , 60 , 28 ,
+                         35 , 3  , 43 , 11 , 51 , 19 , 59 , 27 ,
+                         34 , 2  , 42 , 10 , 50 , 18 , 58 , 26 ,
+                         33 , 1  , 41 , 9  , 49 , 17 , 57 , 25 };
 
 
 class DesPermutations : public IRoundKeysGenEnc{
@@ -279,7 +277,7 @@ class DesPermutations : public IRoundKeysGenEnc{
                                 14 ,6  ,61 ,53 ,45 ,37 ,29 ,
                                 21 ,13 ,5  ,28 ,20 ,12 ,4 };
 
-        int num_leftShift[16] = { 1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1 }; // number of bits to shift for each iteration
+        int leftShift[16] = { 1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1 }; // number of bits to shift for each iteration
 
         const int PC_2[48] = {  14 ,17 ,11 ,24 ,1  ,5  ,
                                 3  ,28 ,15 ,6  ,21 ,10 ,
@@ -316,12 +314,12 @@ class DesPermutations : public IRoundKeysGenEnc{
 
 
         std::string leftKey[16], rightKey[16];
-            leftKey[0] = shift_bits(keyFirstHalf, num_leftShift[0]);
-            rightKey[0] = shift_bits(keySecondHalf, num_leftShift[0]);
+            leftKey[0] = shift_bits(keyFirstHalf, leftShift[0]);
+            rightKey[0] = shift_bits(keySecondHalf, leftShift[0]);
 
             for (int i = 1; i < 16; i++){
-                leftKey[i] = shift_bits(leftKey[i-1], num_leftShift[i]);
-                rightKey[i] = shift_bits(rightKey[i-1], num_leftShift[i]);
+                leftKey[i] = shift_bits(leftKey[i-1], leftShift[i]);
+                rightKey[i] = shift_bits(rightKey[i-1], leftShift[i]);
             }
 
         std::string key48[16], keys56[16];
